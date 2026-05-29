@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acuria - Local Storage WebApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        slateGray: '#2F4F4F',
+                        emeraldGreen: '#10B981',
+                        darkBg: '#111827',
+                        cardBg: '#1F2937'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1F2937; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 3px; }
+    </style>
+</head>
+<body class="bg-darkBg text-gray-100 font-sans min-h-screen flex flex-col">
+
+    <header class="bg-cardBg border-b border-gray-700 px-6 py-4 flex items-center justify-between shadow-xl">
+        <div class="flex items-center space-x-3">
+            <svg class="w-10 h-10 text-emeraldGreen" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="50,5 92,29 92,71 50,95 8,71 8,29" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+                <path d="M50,25 L25,75 M50,25 L75,75 M33,58 L67,58 M50,40 L50,58" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
+            </svg>
+            <div>
+                <h1 class="text-xl font-bold tracking-wider text-white">ACURIA</h1>
+                <p class="text-xs text-gray-400 font-mono tracking-tight">KNOWLEDGE & SUPPORT REPOSITORY</p>
+            </div>
+        </div>
+        <div class="text-xs font-mono bg-gray-800 text-emeraldGreen px-3 py-1.5 rounded border border-gray-700">
+            LOCAL STORAGE STATUS: <span id="storage-quota">0 KB</span>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <aside class="w-80 bg-cardBg border-r border-gray-700 flex flex-col justify-between">
+            <div class="p-4 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Ordnerstruktur</h2>
+                    <button onclick="openFolderModal()" class="text-emeraldGreen hover:text-white text-xs bg-emeraldGreen/10 hover:bg-emeraldGreen px-2 py-1 rounded transition duration-200 flex items-center space-x-1">
+                        <span>+ Neu</span>
+                    </button>
+                </div>
+                
+                <div id="folder-list" class="flex-1 overflow-y-auto space-y-1 custom-scrollbar pr-1">
+                    </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-gray-900 overflow-hidden">
+            <div class="bg-gray-800/50 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div id="active-folder-icon" class="w-10 h-10 rounded bg-gray-700 flex items-center justify-center overflow-hidden p-1">
+                        </div>
+                    <div>
+                        <h2 id="active-folder-name" class="text-lg font-bold text-white">Kein Ordner ausgewählt</h2>
+                        <p id="active-folder-meta" class="text-xs text-gray-400">Wählen Sie einen Ordner aus oder erstellen Sie einen neuen.</p>
+                    </div>
+                </div>
+                <button id="btn-add-item" onclick="openItemModal()" class="hidden bg-emeraldGreen hover:bg-emeraldGreen/90 text-white font-medium text-sm px-4 py-2 rounded shadow transition duration-200">
+                    + Eintrag hinzufügen
+                </button>
+            </div>
+
+            <div id="items-container" class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 custom-scrollbar content-start">
+                </div>
+        </main>
+    </div>
+
+    <div id="folder-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div class="bg-cardBg border border-gray-700 rounded-lg w-full max-w-md p-6 shadow-2xl animate-fade-in">
+            <h3 class="text-lg font-bold text-white mb-4">Neuen Ordner anlegen</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Ordnername</label>
+                    <input type="text" id="input-folder-name" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen" placeholder="z.B. Pflegestandards SGB XI">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeFolderModal()" class="px-4 py-2 text-sm font-medium bg-gray-700 hover:bg-gray-600 rounded text-gray-200 transition">Abbrechen</button>
+                <button onclick="createFolder()" class="px-4 py-2 text-sm font-medium bg-emeraldGreen hover:bg-emeraldGreen/90 rounded text-white transition">Erstellen</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="item-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div class="bg-cardBg border border-gray-700 rounded-lg w-full max-w-2xl p-6 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
+            <h3 class="text-lg font-bold text-white mb-4">Neuen Eintrag hinzufügen</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Typ</label>
+                    <select id="input-item-type" onchange="toggleItemTypeFields()" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen">
+                        <option value="link">App-Link / URL</option>
+                        <option value="code">HTML / Programmcode</option>
+                        <option value="prompt">KI Prompt</option>
+                        <option value="image">Bilddatei</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Titel / Bezeichnung</label>
+                    <input type="text" id="input-item-title" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen" placeholder="Eindeutige Bezeichnung eingeben">
+                </div>
+                
+                <div id="field-link" class="item-fields">
+                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">URL (inkl. https://)</label>
+                    <input type="url" id="input-item-link" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen" placeholder="https://example.com/app">
+                </div>
+
+                <div id="field-code" class="item-fields hidden">
+                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Quellcode (HTML, JS, CSS etc.)</label>
+                    <textarea id="input-item-code" rows="8" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-emeraldGreen" placeholder=""></textarea>
+                </div>
+
+                <div id="field-prompt" class="item-fields hidden">
+                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Prompt Text</label>
+                    <textarea id="input-item-prompt" rows="5" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen" placeholder="Strukturierten Prompt für Pflegeplanung definieren..."></textarea>
+                </div>
+
+                <div id="field-image" class="item-fields hidden">
+                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Bild hochladen</label>
+                    <input type="file" id="input-item-image" accept="image/*" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeItemModal()" class="px-4 py-2 text-sm font-medium bg-gray-700 hover:bg-gray-600 rounded text-gray-200 transition">Abbrechen</button>
+                <button onclick="createItem()" class="px-4 py-2 text-sm font-medium bg-emeraldGreen hover:bg-emeraldGreen/90 rounded text-white transition">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let appData = [];
+        let activeFolderId = null;
+
+        // Default Icon SVG for Folders
+        const defaultFolderIcon = `<svg class="w-full h-full text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z" clip-rule="evenodd"></path></svg>`;
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            updateStorageQuota();
+            renderFolders();
+        });
+
+        function loadFromLocalStorage() {
+            const data = localStorage.getItem('acuria_repository');
+            if (data) {
+                try {
+                    appData = JSON.parse(data);
+                } catch (e) {
+                    console.error("Fehler beim Laden der Daten", e);
+                    appData = [];
+                }
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('acuria_repository', JSON.stringify(appData));
+            updateStorageQuota();
+        }
+
+        function updateStorageQuota() {
+            const totalBytes = encodeURIComponent(JSON.stringify(localStorage)).length;
+            const kiloBytes = (totalBytes / 1024).toFixed(2);
+            document.getElementById('storage-quota').innerText = `${kiloBytes} KB`;
+        }
+
+        // Folder Modal UI
+        function openFolderModal() { document.getElementById('folder-modal').classList.remove('hidden'); }
+        function closeFolderModal() {
+            document.getElementById('folder-modal').classList.add('hidden');
+            document.getElementById('input-folder-name').value = '';
+        }
+
+        // Item Modal UI
+        function openItemModal() { 
+            if (!activeFolderId) return;
+            document.getElementById('item-modal').classList.remove('hidden'); 
+            toggleItemTypeFields();
+        }
+        function closeItemModal() {
+            document.getElementById('item-modal').classList.add('hidden');
+            document.getElementById('input-item-title').value = '';
+            document.getElementById('input-item-link').value = '';
+            document.getElementById('input-item-code').value = '';
+            document.getElementById('input-item-prompt').value = '';
+            document.getElementById('input-item-image').value = '';
+        }
+
+        function toggleItemTypeFields() {
+            const type = document.getElementById('input-item-type').value;
+            document.querySelectorAll('.item-fields').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`field-${type}`).classList.remove('hidden');
+        }
+
+        // Folder Operations
+        function createFolder() {
+            const name = document.getElementById('input-folder-name').value.trim();
+            if (!name) return;
+
+            const newFolder = {
+                id: 'folder_' + Date.now(),
+                name: name,
+                icon: null, // Dynamic allocation based on inner HTML
+                items: []
+            };
+
+            appData.push(newFolder);
+            saveToLocalStorage();
+            renderFolders();
+            closeFolderModal();
+            selectFolder(newFolder.id);
+        }
+
+        function deleteFolder(folderId, event) {
+            event.stopPropagation();
+            if (!confirm("Ordner und alle darin enthaltenen Einträge unwiderruflich löschen?")) return;
+            
+            appData = appData.filter(f => f.id !== folderId);
+            if (activeFolderId === folderId) {
+                activeFolderId = null;
+            }
+            saveToLocalStorage();
+            renderFolders();
+            resetMainArea();
+        }
+
+        function selectFolder(folderId) {
+            activeFolderId = folderId;
+            renderFolders();
+            renderActiveFolderContents();
+        }
+
+        function resetMainArea() {
+            document.getElementById('active-folder-name').innerText = "Kein Ordner ausgewählt";
+            document.getElementById('active-folder-meta').innerText = "Wählen Sie einen Ordner aus oder erstellen Sie einen neuen.";
+            document.getElementById('active-folder-icon').innerHTML = '';
+            document.getElementById('btn-add-item').classList.add('hidden');
+            document.getElementById('items-container').innerHTML = '';
+        }
+
+        // Automatic Icon Extraction Logic
+        function determineFolderIcon(folder) {
+            // Requirement: Automatically adopt the logo/favicon of the stored HTML/link
+            // Look for links or code components containing HTML structure
+            const htmlItem = folder.items.find(item => item.type === 'link' || (item.type === 'code' && item.content.includes('<html')));
+            
+            if (htmlItem) {
+                if (htmlItem.type === 'link') {
+                    try {
+                        const url = new URL(htmlItem.content);
+                        return `<img src="https://www.google.com/s2/favicons?sz=64&domain=${url.hostname}" class="w-full h-full object-contain" alt="Favicon">`;
+                    } catch (e) {
+                        return defaultFolderIcon;
+                    }
+                } else if (htmlItem.type === 'code') {
+                    // Extract custom icon declaration if present via regex or default to an HTML visual indicator
+                    const regex = /<link.*rel=["'](?:shortcut )?icon["'].*href=["']([^"']+)["']/i;
+                    const match = htmlItem.content.match(regex);
+                    if (match && match[1] && match[1].startsWith('http')) {
+                        return `<img src="${match[1]}" class="w-full h-full object-contain" alt="HTML Icon">`;
+                    }
+                    // Visual fallback for internal HTML code nodes
+                    return `<svg class="w-full h-full text-emeraldGreen" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>`;
+                }
+            }
+            return defaultFolderIcon;
+        }
+
+        // Render Sidebar
+        function renderFolders() {
+            const container = document.getElementById('folder-list');
+            container.innerHTML = '';
+
+            appData.forEach(folder => {
+                const isActive = folder.id === activeFolderId;
+                const iconHtml = determineFolderIcon(folder);
+
+                const folderEl = document.createElement('div');
+                folderEl.className = `flex items-center justify-between p-3 rounded-lg cursor-pointer transition duration-150 ${isActive ? 'bg-emeraldGreen/20 border border-emeraldGreen/40' : 'hover:bg-gray-800 border border-transparent'}`;
+                folderEl.onclick = () => selectFolder(folder.id);
+
+                folderEl.innerHTML = `
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div class="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded overflow-hidden">
+                            ${iconHtml}
+                        </div>
+                        <span class="text-sm font-medium truncate text-gray-200">${folder.name}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-mono bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">${folder.items.length}</span>
+                        <button onclick="deleteFolder('${folder.id}', event)" class="text-gray-500 hover:text-red-400 p-0.5 rounded transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(folderEl);
+            });
+        }
+
+        // Render Folder Items
+        function renderActiveFolderContents() {
+            const folder = appData.find(f => f.id === activeFolderId);
+            if (!folder) return;
+
+            document.getElementById('active-folder-name').innerText = folder.name;
+            document.getElementById('active-folder-meta').innerText = `ID: ${folder.id} | Gesamtkomponenten: ${folder.items.length}`;
+            document.getElementById('active-folder-icon').innerHTML = determineFolderIcon(folder);
+            document.getElementById('btn-add-item').classList.remove('hidden');
+
+            const container = document.getElementById('items-container');
+            container.innerHTML = '';
+
+            if (folder.items.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full py-12 flex flex-col items-center justify-center text-gray-500 font-mono text-sm">
+                        <svg class="w-12 h-12 mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5a2 2 0 012-2h2a2 2 0 002-2V7a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 002 2h2a2 2 0 012 2z"></path></svg>
+                        Dieser Ordner besitzt keine Einträge.
+                    </div>
+                `;
+                return;
+            }
+
+            folder.items.forEach((item) => {
+                const card = document.createElement('div');
+                card.className = "bg-cardBg border border-gray-700 rounded-lg p-4 flex flex-col justify-between shadow-md relative overflow-hidden group";
+                
+                let contentMarkup = '';
+                let typeBadgeColor = 'bg-gray-800 text-gray-400';
+
+                if (item.type === 'link') {
+                    typeBadgeColor = 'bg-blue-900/40 text-blue-400 border border-blue-800/50';
+                    contentMarkup = `
+                        <a href="${item.content}" target="_blank" class="block bg-gray-900 hover:bg-gray-800 border border-gray-700 rounded p-3 text-sm text-emeraldGreen font-mono truncate transition mt-2">
+                            ${item.content} ↗
+                        </a>
+                    `;
+                } else if (item.type === 'code') {
+                    typeBadgeColor = 'bg-purple-900/40 text-purple-400 border border-purple-800/50';
+                    contentMarkup = `
+                        <div class="relative mt-2">
+                            <pre class="bg-gray-900 border border-gray-700 rounded p-2 text-xs font-mono text-gray-300 max-h-32 overflow-y-auto custom-scrollbar whitespace-pre-wrap">${escapeHTML(item.content)}</pre>
+                            <button onclick="copyToClipboard(\`${escapeQuotes(item.content)}\`)" class="absolute top-2 right-2 bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 text-[10px] rounded border border-gray-600 transition">Copy</button>
+                        </div>
+                    `;
+                } else if (item.type === 'prompt') {
+                    typeBadgeColor = 'bg-amber-900/40 text-amber-400 border border-amber-800/50';
+                    contentMarkup = `
+                        <div class="relative mt-2">
+                            <p class="bg-gray-900 border border-gray-700 rounded p-3 text-sm italic text-gray-300 whitespace-pre-wrap max-h-32 overflow-y-auto custom-scrollbar">"${item.content}"</p>
+                            <button onclick="copyToClipboard(\`${escapeQuotes(item.content)}\`)" class="absolute top-2 right-2 bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 text-[10px] rounded border border-gray-600 transition">Copy</button>
+                        </div>
+                    `;
+                } else if (item.type === 'image') {
+                    typeBadgeColor = 'bg-rose-900/40 text-rose-400 border border-rose-800/50';
+                    contentMarkup = `
+                        <div class="mt-2 rounded border border-gray-700 overflow-hidden bg-gray-900 flex justify-center max-h-40">
+                            <img src="${item.content}" class="object-contain max-h-40 w-full" alt="${item.title}">
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between mb-2">
+                            <span class="text-xs uppercase px-2 py-0.5 rounded font-mono font-bold tracking-wider ${typeBadgeColor}">${item.type}</span>
+                            <button onclick="deleteItem('${item.id}')" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-150">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        </div>
+                        <h4 class="text-sm font-bold text-white tracking-wide truncate mb-1">${item.title}</h4>
+                        <span class="text-[10px] font-mono text-gray-500 block mb-2">Erstellt: ${item.date}</span>
+                        ${contentMarkup}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Create Item Entry
+        function createItem() {
+            const folder = appData.find(f => f.id === activeFolderId);
+            if (!folder) return;
+
+            const type = document.getElementById('input-item-type').value;
+            const title = document.getElementById('input-item-title').value.trim();
+            if (!title) return;
+
+            let content = '';
+
+            if (type === 'link') {
+                content = document.getElementById('input-item-link').value.trim();
+                if (!content) return;
+            } else if (type === 'code') {
+                content = document.getElementById('input-item-code').value;
+                if (!content.trim()) return;
+            } else if (type === 'prompt') {
+                content = document.getElementById('input-item-prompt').value;
+                if (!content.trim()) return;
+            } else if (type === 'image') {
+                const fileInput = document.getElementById('input-item-image');
+                if (fileInput.files && fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        finalizeItemCreation(folder, type, title, e.target.result);
+                    };
+                    reader.readAsDataURL(fileInput.files[0]);
+                    return; // Early exit due to async file reading
+                } else {
+                    return;
+                }
+            }
+
+            finalizeItemCreation(folder, type, title, content);
+        }
+
+        function finalizeItemCreation(folder, type, title, content) {
+            const newItem = {
+                id: 'item_' + Date.now(),
+                type: type,
+                title: title,
+                content: content,
+                date: new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })
+            };
+
+            folder.items.push(newItem);
+            saveToLocalStorage();
+            renderFolders(); // Update to check for automatic icon changes
+            renderActiveFolderContents();
+            closeItemModal();
+        }
+
+        function deleteItem(itemId) {
+            const folder = appData.find(f => f.id === activeFolderId);
+            if (!folder) return;
+
+            folder.items = folder.items.filter(i => i.id !== itemId);
+            saveToLocalStorage();
+            renderFolders();
+            renderActiveFolderContents();
+        }
+
+        // Helper Utilities
+        function escapeHTML(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+        
+        function escapeQuotes(str) {
+            return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Inhalt erfolgreich in die Zwischenablage kopiert.");
+            }).catch(err => {
+                console.error("Fehler beim Kopieren: ", err);
+            });
+        }
+    </script>
+</body>
+</html>
