@@ -1,473 +1,738 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acuria - Local Storage WebApp</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slateGray: '#2F4F4F',
-                        emeraldGreen: '#10B981',
-                        darkBg: '#111827',
-                        cardBg: '#1F2937'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1F2937; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4B5563; border-radius: 3px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0C1320">
+<title>Acuria · Knowledge & Support for Care</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: { extend: { colors: {
+    slateGray:'#2F4F4F', emeraldGreen:'#10B981', darkBg:'#080D17', cardBg:'#121A28'
+  } } }
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg-0:#080D17; --bg-1:#0C1320; --bg-2:#101A2B;
+  --line:rgba(255,255,255,.07); --line-strong:rgba(255,255,255,.12);
+  --txt:#E6EAF0; --txt-dim:#9AA6B5; --txt-faint:#647281;
+  --emerald:#10B981; --emerald-1:#34D399; --emerald-2:#0EA371;
+  --emerald-glow:rgba(16,185,129,.45); --slate:#3E5560;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;padding:0}
+body{
+  height:100dvh; overflow:hidden; color:var(--txt); background:var(--bg-0);
+  font-family:'Manrope',system-ui,sans-serif; -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+.font-display{font-family:'Outfit',sans-serif}
+.font-mono{font-family:'JetBrains Mono',monospace}
+
+/* ---------- Morphing background ---------- */
+.bg-canvas{position:fixed;inset:0;z-index:-2;overflow:hidden;
+  background:
+    radial-gradient(1100px 760px at 12% -12%, rgba(16,185,129,.12), transparent 60%),
+    radial-gradient(950px 680px at 112% 6%, rgba(48,120,156,.12), transparent 56%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-0) 62%);
+}
+.blob{position:absolute;filter:blur(90px);opacity:.5;mix-blend-mode:screen;will-change:transform,border-radius}
+.blob-1{width:48vw;height:48vw;max-width:580px;max-height:580px;top:-13vw;left:-9vw;
+  background:radial-gradient(circle at 32% 30%, #10B981, transparent 68%); animation:morphA 26s ease-in-out infinite}
+.blob-2{width:44vw;height:44vw;max-width:540px;max-height:540px;bottom:-16vw;right:-11vw;
+  background:radial-gradient(circle at 60% 42%, #2C7FA0, transparent 66%); animation:morphB 32s ease-in-out infinite}
+.blob-3{width:34vw;height:34vw;max-width:440px;max-height:440px;top:40%;left:44%;
+  background:radial-gradient(circle at 50% 50%, #1E5C46, transparent 70%); animation:morphC 38s ease-in-out infinite}
+@keyframes morphA{
+  0%,100%{transform:translate(0,0) scale(1) rotate(0deg);border-radius:60% 40% 55% 45%/55% 60% 40% 45%}
+  33%{transform:translate(7vw,5vw) scale(1.12) rotate(38deg);border-radius:40% 60% 45% 55%/60% 45% 55% 40%}
+  66%{transform:translate(-4vw,7vw) scale(.94) rotate(-22deg);border-radius:55% 45% 60% 40%/45% 55% 45% 60%}
+}
+@keyframes morphB{
+  0%,100%{transform:translate(0,0) scale(1) rotate(0deg);border-radius:45% 55% 40% 60%/55% 45% 60% 40%}
+  50%{transform:translate(-8vw,-5vw) scale(1.16) rotate(-30deg);border-radius:60% 40% 55% 45%/40% 60% 45% 55%}
+}
+@keyframes morphC{
+  0%,100%{transform:translate(0,0) scale(1) rotate(0deg);border-radius:50% 50% 45% 55%/55% 45% 55% 45%}
+  40%{transform:translate(5vw,-6vw) scale(1.1) rotate(28deg);border-radius:45% 55% 60% 40%/50% 60% 40% 50%}
+  75%{transform:translate(-5vw,4vw) scale(.96) rotate(-18deg);border-radius:60% 40% 50% 50%/45% 55% 50% 50%}
+}
+.grain{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ---------- Surfaces ---------- */
+.glass{background:linear-gradient(180deg, rgba(18,26,40,.82), rgba(12,19,32,.86));
+  backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%);
+  border:1px solid var(--line)}
+
+.app-shell{height:100dvh;display:flex;flex-direction:column}
+.app-header{flex-shrink:0;border-bottom:1px solid var(--line);z-index:50}
+.app-body{flex:1;display:flex;min-height:0;position:relative}
+
+/* ---------- Logo / brand ---------- */
+.logo-mark{width:46px;height:46px;flex-shrink:0}
+.logo-mark svg{width:100%;height:100%;filter:drop-shadow(0 6px 14px rgba(16,185,129,.3))}
+.brand-word{font-size:21px;font-weight:800;letter-spacing:.13em;color:#fff;line-height:1;margin:0}
+.brand-tag{font-size:9px;letter-spacing:.2em;color:var(--txt-dim);margin:4px 0 0;text-transform:uppercase}
+@media(max-width:420px){.brand-word{font-size:18px}.brand-tag{display:none}}
+
+.storage-badge{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:var(--emerald-1);
+  background:linear-gradient(180deg, rgba(16,185,129,.1), rgba(16,185,129,.04));
+  border:1px solid rgba(16,185,129,.25);padding:7px 12px;border-radius:999px;white-space:nowrap;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 0 18px -8px var(--emerald-glow)}
+.storage-badge svg{width:15px;height:15px}
+.storage-badge .storage-label{color:var(--txt-dim)}
+#storage-quota{color:#fff;font-weight:600}
+@media(max-width:540px){.storage-badge .storage-label{display:none}}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-weight:600;
+  font-size:14px;border-radius:12px;padding:10px 18px;cursor:pointer;border:1px solid transparent;
+  transition:transform .2s, box-shadow .2s, filter .2s, background .2s}
+.btn:active{transform:translateY(1px) scale(.99)}
+.btn-sm{padding:7px 13px;font-size:12.5px;border-radius:11px}
+.btn-accent{background:linear-gradient(180deg, var(--emerald-1), var(--emerald-2));color:#04130D;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45), 0 10px 24px -10px var(--emerald-glow), 0 2px 6px -2px rgba(0,0,0,.4)}
+.btn-accent:hover{filter:brightness(1.05);transform:translateY(-2px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 16px 32px -10px var(--emerald-glow), 0 0 26px -6px var(--emerald-glow)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--txt-dim);border-color:var(--line-strong)}
+.btn-ghost:hover{background:rgba(255,255,255,.09);color:var(--txt)}
+
+.hamburger{width:42px;height:42px;border-radius:13px;display:none;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.05);border:1px solid var(--line-strong);color:var(--txt);flex-shrink:0;transition:background .2s}
+.hamburger:hover{background:rgba(255,255,255,.1)}
+.hamburger svg{width:20px;height:20px}
+.ghost-icon{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;
+  color:var(--txt-dim);transition:color .2s, background .2s;cursor:pointer}
+.ghost-icon:hover{color:#fff;background:rgba(255,255,255,.07)}
+.danger-icon{display:inline-flex;align-items:center;justify-content:center;padding:6px;border-radius:9px;
+  color:var(--txt-faint);transition:color .2s, background .2s;cursor:pointer}
+.danger-icon:hover{color:#FF7A85;background:rgba(244,63,94,.12)}
+.sidebar-close{display:none}
+@media(max-width:767px){.hamburger{display:inline-flex}.sidebar-close{display:inline-flex}}
+
+/* ---------- Sidebar ---------- */
+.sidebar{width:322px;flex-shrink:0;display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+.side-title{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--txt-dim)}
+.folder-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border-radius:14px;
+  cursor:pointer;border:1px solid transparent;position:relative;transition:background .2s, border-color .2s, transform .15s}
+.folder-item:hover{background:rgba(255,255,255,.04);transform:translateX(2px)}
+.folder-item.active{background:linear-gradient(180deg, rgba(16,185,129,.16), rgba(16,185,129,.05));
+  border-color:rgba(16,185,129,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 0 22px -10px var(--emerald-glow)}
+.folder-item.active::before{content:'';position:absolute;left:-1px;top:20%;bottom:20%;width:3px;border-radius:0 3px 3px 0;
+  background:linear-gradient(180deg, var(--emerald-1), var(--emerald-2));box-shadow:0 0 10px var(--emerald-glow)}
+.folder-icon-wrap{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;padding:5px;overflow:hidden;background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+.folder-name{font-size:13.5px;font-weight:600;color:var(--txt)}
+.folder-count{font-family:'JetBrains Mono';font-size:11px;color:var(--txt-faint);background:rgba(255,255,255,.05);
+  border:1px solid var(--line);padding:1px 8px;border-radius:999px}
+.side-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:40px 16px;color:var(--txt-faint);font-size:12.5px}
+.side-foot{font-size:10px;letter-spacing:.06em;color:var(--txt-faint);padding-top:12px;margin-top:8px;border-top:1px solid var(--line);text-align:center}
+
+/* ---------- Main ---------- */
+.main{flex:1;display:flex;flex-direction:column;min-height:0}
+.main-bar{flex-shrink:0;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(14,21,32,.55), rgba(14,21,32,.15));
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.main-title{font-size:18px;font-weight:700;color:#fff;line-height:1.1;margin:0}
+.main-meta{font-size:12px;color:var(--txt-dim);margin:3px 0 0}
+.active-folder-icon{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;padding:8px;overflow:hidden;background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  border:1px solid var(--line-strong);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 8px 20px -10px rgba(0,0,0,.6), 0 0 22px -12px var(--emerald-glow)}
+
+/* ---------- Cards ---------- */
+.card-3d{position:relative;border-radius:18px;padding:16px;display:flex;flex-direction:column;
+  background:linear-gradient(160deg, rgba(20,28,42,.92), rgba(13,19,32,.94));border:1px solid var(--line);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 10px 30px -12px rgba(0,0,0,.7), 0 2px 8px -4px rgba(0,0,0,.5);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s, border-color .35s}
+.card-3d:hover{transform:translateY(-5px);border-color:rgba(16,185,129,.32);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08), 0 26px 50px -16px rgba(0,0,0,.8), 0 0 0 1px rgba(16,185,129,.12), 0 0 34px -8px var(--emerald-glow)}
+.card-title{font-size:15px;font-weight:600;color:#fff}
+.card-date{font-size:10px;color:var(--txt-faint)}
+
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;font-size:10px;
+  font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid transparent}
+.badge svg{width:12px;height:12px}
+.badge-link{background:linear-gradient(180deg, rgba(59,130,246,.18), rgba(59,130,246,.07));color:#7DB3FF;border-color:rgba(59,130,246,.3)}
+.badge-code{background:linear-gradient(180deg, rgba(168,85,247,.18), rgba(168,85,247,.07));color:#C9A2FF;border-color:rgba(168,85,247,.3)}
+.badge-prompt{background:linear-gradient(180deg, rgba(245,158,11,.18), rgba(245,158,11,.07));color:#FBD27A;border-color:rgba(245,158,11,.3)}
+.badge-image{background:linear-gradient(180deg, rgba(244,63,94,.18), rgba(244,63,94,.07));color:#FF9DAE;border-color:rgba(244,63,94,.3)}
+
+.content-box{position:relative;margin-top:12px}
+.content-pre{background:linear-gradient(180deg, rgba(6,11,20,.92), rgba(6,11,20,.7));border:1px solid var(--line);
+  border-radius:12px;padding:12px 14px;font-family:'JetBrains Mono';font-size:12px;color:#C5CDD8;
+  max-height:140px;overflow:auto;white-space:pre-wrap;word-break:break-word;margin:0}
+.content-prompt{background:linear-gradient(180deg, rgba(8,13,23,.7), rgba(8,13,23,.45));border:1px solid var(--line);
+  border-left:3px solid rgba(245,158,11,.6);border-radius:12px;padding:12px 14px;font-size:13.5px;font-style:italic;
+  color:#D7DEE7;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow:auto;line-height:1.5}
+.content-link{display:flex;align-items:center;gap:8px;margin-top:12px;text-decoration:none;overflow:hidden;
+  background:linear-gradient(180deg, rgba(8,13,23,.8), rgba(8,13,23,.5));border:1px solid var(--line);
+  border-radius:12px;padding:11px 13px;color:var(--emerald-1);font-family:'JetBrains Mono';font-size:12.5px;
+  transition:border-color .2s, background .2s}
+.content-link span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.content-link svg{flex-shrink:0;width:15px;height:15px}
+.content-link:hover{border-color:rgba(16,185,129,.4);background:linear-gradient(180deg, rgba(16,185,129,.08), rgba(8,13,23,.6))}
+.copy-btn{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:4px;font-size:10px;
+  font-weight:600;padding:4px 9px;border-radius:8px;cursor:pointer;color:var(--txt-dim);
+  background:rgba(18,26,40,.92);border:1px solid var(--line-strong);backdrop-filter:blur(6px);transition:all .2s}
+.copy-btn svg{width:12px;height:12px}
+.copy-btn:hover{color:var(--emerald-1);border-color:rgba(16,185,129,.4)}
+.img-preview{margin-top:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#06090F;
+  display:flex;justify-content:center;max-height:180px}
+.img-preview img{object-fit:contain;max-height:180px;width:100%}
+
+.empty{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:64px 20px;color:var(--txt-faint)}
+.empty svg{width:54px;height:54px;margin-bottom:14px;opacity:.4}
+.empty p{margin:0;font-size:14px;color:var(--txt-dim);font-weight:600}
+.empty .empty-sub{font-size:12.5px;color:var(--txt-faint);font-weight:400;margin-top:6px}
+
+/* ---------- Inputs / modal ---------- */
+.field-label{display:block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-dim);margin-bottom:7px}
+.field{width:100%;font-family:inherit;font-size:14px;color:var(--txt);background:rgba(8,13,23,.7);
+  border:1px solid var(--line-strong);border-radius:12px;padding:12px 14px;transition:border-color .2s, box-shadow .2s}
+.field::placeholder{color:var(--txt-faint)}
+.field:focus{outline:none;border-color:var(--emerald);box-shadow:0 0 0 3px rgba(16,185,129,.15)}
+textarea.field{resize:vertical;min-height:96px;font-family:'JetBrains Mono';font-size:13px;line-height:1.5}
+select.field{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%239AA6B5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 4 4 4-4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:40px}
+input[type=file].field{padding:9px 12px;font-size:12.5px;color:var(--txt-dim)}
+input[type=file].field::file-selector-button{font-family:inherit;font-weight:600;font-size:12px;color:#04130D;cursor:pointer;
+  margin-right:12px;padding:7px 12px;border-radius:9px;border:none;background:linear-gradient(180deg, var(--emerald-1), var(--emerald-2))}
+
+.modal{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-overlay{position:absolute;inset:0;background:rgba(4,8,15,.72);backdrop-filter:blur(6px);animation:overlayIn .25s ease}
+.modal-card{position:relative;width:100%;max-width:480px;border-radius:20px;padding:24px;animation:modalIn .35s cubic-bezier(.2,.8,.2,1);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.06)}
+.modal-lg{max-width:640px;max-height:90dvh;overflow:auto}
+.modal-title{font-size:17px;font-weight:700;color:#fff;margin:0}
+.modal-sub{font-size:12px;color:var(--txt-dim);margin:3px 0 0}
+.modal-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  background:linear-gradient(180deg, rgba(16,185,129,.18), rgba(16,185,129,.06));border:1px solid rgba(16,185,129,.3);color:var(--emerald-1)}
+.modal-icon svg{width:19px;height:19px}
+@keyframes modalIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes overlayIn{from{opacity:0}to{opacity:1}}
+
+/* ---------- Toast ---------- */
+.toast-wrap{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:200;
+  display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:11px 18px;border-radius:14px;font-size:13px;font-weight:600;color:var(--txt);
+  background:linear-gradient(180deg, rgba(18,26,40,.96), rgba(12,19,32,.96));border:1px solid rgba(16,185,129,.4);
+  backdrop-filter:blur(12px);box-shadow:0 16px 40px -12px rgba(0,0,0,.7), 0 0 30px -10px var(--emerald-glow);
+  animation:toastIn .35s cubic-bezier(.2,.8,.2,1)}
+.toast svg{width:18px;height:18px;color:var(--emerald-1)}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px) scale(.92)}to{opacity:1;transform:none}}
+
+/* ---------- Scrollbars ---------- */
+.scroll::-webkit-scrollbar{width:8px;height:8px}
+.scroll::-webkit-scrollbar-track{background:transparent}
+.scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+.scroll::-webkit-scrollbar-thumb:hover{background:rgba(16,185,129,.4);background-clip:content-box}
+
+.hidden{display:none!important}
+
+/* ---------- Mobile drawer ---------- */
+.sidebar-backdrop{display:none}
+@media(max-width:767px){
+  .sidebar{position:fixed;top:0;bottom:0;left:0;width:min(86vw,330px);z-index:70;
+    transform:translateX(-104%);transition:transform .4s cubic-bezier(.22,.8,.2,1);
+    box-shadow:24px 0 60px -20px rgba(0,0,0,.8)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-backdrop{display:block;position:fixed;inset:0;z-index:65;background:rgba(4,8,15,.6);
+    backdrop-filter:blur(2px);opacity:0;visibility:hidden;transition:opacity .35s, visibility .35s}
+  .sidebar-backdrop.open{opacity:1;visibility:visible}
+  .main-title{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
-<body class="bg-darkBg text-gray-100 font-sans min-h-screen flex flex-col">
 
-    <header class="bg-cardBg border-b border-gray-700 px-6 py-4 flex items-center justify-between shadow-xl">
-        <div class="flex items-center space-x-3">
-            <svg class="w-10 h-10 text-emeraldGreen" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polygon points="50,5 92,29 92,71 50,95 8,71 8,29" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
-                <path d="M50,25 L25,75 M50,25 L75,75 M33,58 L67,58 M50,40 L50,58" stroke="currentColor" stroke-width="6" stroke-linecap="round"/>
-            </svg>
-            <div>
-                <h1 class="text-xl font-bold tracking-wider text-white">ACURIA</h1>
-                <p class="text-xs text-gray-400 font-mono tracking-tight">KNOWLEDGE & SUPPORT REPOSITORY</p>
-            </div>
-        </div>
-        <div class="text-xs font-mono bg-gray-800 text-emeraldGreen px-3 py-1.5 rounded border border-gray-700">
-            LOCAL STORAGE STATUS: <span id="storage-quota">0 KB</span>
-        </div>
-    </header>
+<body>
+<div class="bg-canvas"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+<div class="grain"></div>
 
-    <div class="flex flex-1 overflow-hidden">
-        
-        <aside class="w-80 bg-cardBg border-r border-gray-700 flex flex-col justify-between">
-            <div class="p-4 flex flex-col h-full">
-                <div class="flex items-center justify-between mb-4">
-                    <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-400">Ordnerstruktur</h2>
-                    <button onclick="openFolderModal()" class="text-emeraldGreen hover:text-white text-xs bg-emeraldGreen/10 hover:bg-emeraldGreen px-2 py-1 rounded transition duration-200 flex items-center space-x-1">
-                        <span>+ Neu</span>
-                    </button>
-                </div>
-                
-                <div id="folder-list" class="flex-1 overflow-y-auto space-y-1 custom-scrollbar pr-1">
-                    </div>
-            </div>
-        </aside>
+<!-- shared gradient defs for crisp icons -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute;pointer-events:none">
+  <defs>
+    <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6E8794"/><stop offset="1" stop-color="#16A87A"/>
+    </linearGradient>
+    <linearGradient id="codeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34D399"/><stop offset="1" stop-color="#0EA371"/>
+    </linearGradient>
+  </defs>
+</svg>
 
-        <main class="flex-1 flex flex-col bg-gray-900 overflow-hidden">
-            <div class="bg-gray-800/50 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div id="active-folder-icon" class="w-10 h-10 rounded bg-gray-700 flex items-center justify-center overflow-hidden p-1">
-                        </div>
-                    <div>
-                        <h2 id="active-folder-name" class="text-lg font-bold text-white">Kein Ordner ausgewählt</h2>
-                        <p id="active-folder-meta" class="text-xs text-gray-400">Wählen Sie einen Ordner aus oder erstellen Sie einen neuen.</p>
-                    </div>
-                </div>
-                <button id="btn-add-item" onclick="openItemModal()" class="hidden bg-emeraldGreen hover:bg-emeraldGreen/90 text-white font-medium text-sm px-4 py-2 rounded shadow transition duration-200">
-                    + Eintrag hinzufügen
-                </button>
-            </div>
+<div class="app-shell">
 
-            <div id="items-container" class="flex-1 overflow-y-auto p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 custom-scrollbar content-start">
-                </div>
-        </main>
+  <!-- HEADER -->
+  <header class="app-header glass px-4 sm:px-6 py-3.5 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3 min-w-0">
+      <button class="hamburger" onclick="toggleSidebar()" aria-label="Ordner-Menü öffnen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="logo-mark">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lg-hex" x1="5%" y1="5%" x2="95%" y2="95%">
+              <stop offset="0%" stop-color="#5C7682"/><stop offset="52%" stop-color="#2E6B52"/><stop offset="100%" stop-color="#147A53"/>
+            </linearGradient>
+            <linearGradient id="lg-a" x1="20%" y1="0%" x2="80%" y2="100%">
+              <stop offset="0%" stop-color="#6B8592"/><stop offset="100%" stop-color="#18AA70"/>
+            </linearGradient>
+            <linearGradient id="lg-cross" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#42E8AC"/><stop offset="100%" stop-color="#0CB87D"/>
+            </linearGradient>
+            <filter id="lg-glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feDropShadow dx="0" dy="0" stdDeviation="2.5" flood-color="#10B981" flood-opacity="0.70"/>
+            </filter>
+          </defs>
+          <!-- Outer hexagon (pointy-top, gradient border) -->
+          <polygon points="50,4 87,25.5 87,74.5 50,96 13,74.5 13,25.5" stroke="url(#lg-hex)" stroke-width="5.5" stroke-linejoin="round"/>
+          <!-- Inner double-line: split top-peak + upper-left + left edge -->
+          <polyline points="58,16 50,11 19,29 19,52" fill="none" stroke="#5E7882" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+          <!-- A — apex left of center, right leg meets cross -->
+          <line x1="23" y1="79" x2="46" y2="19" stroke="url(#lg-a)" stroke-width="6.5" stroke-linecap="round"/>
+          <line x1="69" y1="79" x2="46" y2="19" stroke="url(#lg-a)" stroke-width="6.5" stroke-linecap="round"/>
+          <line x1="32" y1="55" x2="60" y2="55" stroke="url(#lg-a)" stroke-width="6.5" stroke-linecap="round"/>
+          <!-- Medical cross — single plus, center (60,45), dark separation + glow -->
+          <path d="M54.5,27 H65.5 V39.5 H78 V50.5 H65.5 V63 H54.5 V50.5 H42 V39.5 H54.5 Z" fill="url(#lg-cross)" stroke="#0B1422" stroke-width="2.4" stroke-linejoin="round" filter="url(#lg-glow)"/>
+          <!-- Cross inner highlight (lighter medical center) -->
+          <path d="M57,30 H63 V42 H75 V48 H63 V60 H57 V48 H45 V42 H57 Z" fill="#9FF2D2" opacity="0.32"/>
+        </svg>
+      </div>
+      <div class="min-w-0">
+        <h1 class="brand-word font-display">ACURIA</h1>
+        <p class="brand-tag font-mono">Knowledge &amp; Support for Care</p>
+      </div>
     </div>
-
-    <div id="folder-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-cardBg border border-gray-700 rounded-lg w-full max-w-md p-6 shadow-2xl animate-fade-in">
-            <h3 class="text-lg font-bold text-white mb-4">Neuen Ordner anlegen</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Ordnername</label>
-                    <input type="text" id="input-folder-name" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen" placeholder="z.B. Pflegestandards SGB XI">
-                </div>
-            </div>
-            <div class="flex justify-end space-x-3 mt-6">
-                <button onclick="closeFolderModal()" class="px-4 py-2 text-sm font-medium bg-gray-700 hover:bg-gray-600 rounded text-gray-200 transition">Abbrechen</button>
-                <button onclick="createFolder()" class="px-4 py-2 text-sm font-medium bg-emeraldGreen hover:bg-emeraldGreen/90 rounded text-white transition">Erstellen</button>
-            </div>
-        </div>
+    <div class="storage-badge font-mono">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5.5" rx="8" ry="3"/><path d="M4 5.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/><path d="M4 11.5v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+      <span class="storage-label">Local Storage</span><span id="storage-quota">0 KB</span>
     </div>
+  </header>
 
-    <div id="item-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-cardBg border border-gray-700 rounded-lg w-full max-w-2xl p-6 shadow-2xl overflow-y-auto max-h-[90vh] custom-scrollbar">
-            <h3 class="text-lg font-bold text-white mb-4">Neuen Eintrag hinzufügen</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Typ</label>
-                    <select id="input-item-type" onchange="toggleItemTypeFields()" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen">
-                        <option value="link">App-Link / URL</option>
-                        <option value="code">HTML / Programmcode</option>
-                        <option value="prompt">KI Prompt</option>
-                        <option value="image">Bilddatei</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Titel / Bezeichnung</label>
-                    <input type="text" id="input-item-title" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen" placeholder="Eindeutige Bezeichnung eingeben">
-                </div>
-                
-                <div id="field-link" class="item-fields">
-                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">URL (inkl. https://)</label>
-                    <input type="url" id="input-item-link" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen" placeholder="https://example.com/app">
-                </div>
+  <div class="app-body">
 
-                <div id="field-code" class="item-fields hidden">
-                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Quellcode (HTML, JS, CSS etc.)</label>
-                    <textarea id="input-item-code" rows="8" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white font-mono text-sm focus:outline-none focus:border-emeraldGreen" placeholder=""></textarea>
-                </div>
-
-                <div id="field-prompt" class="item-fields hidden">
-                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Prompt Text</label>
-                    <textarea id="input-item-prompt" rows="5" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen" placeholder="Strukturierten Prompt für Pflegeplanung definieren..."></textarea>
-                </div>
-
-                <div id="field-image" class="item-fields hidden">
-                    <label class="block text-xs font-semibold uppercase text-gray-400 mb-1">Bild hochladen</label>
-                    <input type="file" id="input-item-image" accept="image/*" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white focus:outline-none focus:border-emeraldGreen">
-                </div>
-            </div>
-            <div class="flex justify-end space-x-3 mt-6">
-                <button onclick="closeItemModal()" class="px-4 py-2 text-sm font-medium bg-gray-700 hover:bg-gray-600 rounded text-gray-200 transition">Abbrechen</button>
-                <button onclick="createItem()" class="px-4 py-2 text-sm font-medium bg-emeraldGreen hover:bg-emeraldGreen/90 rounded text-white transition">Speichern</button>
-            </div>
+    <!-- SIDEBAR / DRAWER -->
+    <aside id="sidebar" class="sidebar glass">
+      <div class="p-4 flex flex-col h-full min-h-0">
+        <div class="flex items-center justify-between mb-4 gap-2">
+          <h2 class="side-title font-display">Ordnerstruktur</h2>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-accent btn-sm" onclick="openFolderModal()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>Neu
+            </button>
+            <button class="ghost-icon sidebar-close" onclick="closeSidebar()" aria-label="Schließen">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
+          </div>
         </div>
+        <div id="folder-list" class="flex-1 overflow-y-auto space-y-1.5 scroll pr-1"></div>
+        <div class="side-foot font-mono">ACURIA · lokaler Datenspeicher</div>
+      </div>
+    </aside>
+    <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeSidebar()"></div>
+
+    <!-- MAIN -->
+    <main class="main">
+      <div class="main-bar px-4 sm:px-6 py-4 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
+          <div id="active-folder-icon" class="active-folder-icon"></div>
+          <div class="min-w-0">
+            <h2 id="active-folder-name" class="main-title font-display truncate">Kein Ordner ausgewählt</h2>
+            <p id="active-folder-meta" class="main-meta truncate">Wählen Sie einen Ordner oder erstellen Sie einen neuen.</p>
+          </div>
+        </div>
+        <button id="btn-add-item" onclick="openItemModal()" class="btn btn-accent hidden">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+          <span class="hidden sm:inline">Eintrag hinzufügen</span><span class="sm:hidden">Eintrag</span>
+        </button>
+      </div>
+      <div id="items-container" class="flex-1 overflow-y-auto p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 scroll content-start"></div>
+    </main>
+  </div>
+</div>
+
+<!-- FOLDER MODAL -->
+<div id="folder-modal" class="modal hidden">
+  <div class="modal-overlay" onclick="closeFolderModal()"></div>
+  <div class="modal-card glass">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 2.2h7.5A2.5 2.5 0 0 1 21 9.7V17a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17z"/></svg></div>
+      <div><h3 class="modal-title font-display">Neuen Ordner anlegen</h3><p class="modal-sub">Strukturiert Wissens- und Support-Einträge.</p></div>
     </div>
+    <label class="field-label">Ordnername</label>
+    <input type="text" id="input-folder-name" class="field" placeholder="z. B. Pflegestandards SGB XI" onkeydown="if(event.key==='Enter')createFolder()">
+    <div class="flex justify-end gap-3 mt-6">
+      <button class="btn btn-ghost" onclick="closeFolderModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="createFolder()">Erstellen</button>
+    </div>
+  </div>
+</div>
 
-    <script>
-        let appData = [];
-        let activeFolderId = null;
+<!-- ITEM MODAL -->
+<div id="item-modal" class="modal hidden">
+  <div class="modal-overlay" onclick="closeItemModal()"></div>
+  <div class="modal-card modal-lg glass scroll">
+    <div class="flex items-center gap-3 mb-5">
+      <div class="modal-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></div>
+      <div><h3 class="modal-title font-display">Neuen Eintrag hinzufügen</h3><p class="modal-sub">Link, Code, KI-Prompt oder Bilddatei.</p></div>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="field-label">Typ</label>
+        <select id="input-item-type" onchange="toggleItemTypeFields()" class="field">
+          <option value="link">App-Link / URL</option>
+          <option value="code">HTML / Programmcode</option>
+          <option value="prompt">KI-Prompt</option>
+          <option value="image">Bilddatei</option>
+        </select>
+      </div>
+      <div>
+        <label class="field-label">Titel / Bezeichnung</label>
+        <input type="text" id="input-item-title" class="field" placeholder="Eindeutige Bezeichnung eingeben">
+      </div>
+      <div id="field-link" class="item-fields">
+        <label class="field-label">URL (inkl. https://)</label>
+        <input type="url" id="input-item-link" class="field" placeholder="https://example.com/app">
+      </div>
+      <div id="field-code" class="item-fields hidden">
+        <label class="field-label">Quellcode (HTML, JS, CSS …)</label>
+        <textarea id="input-item-code" rows="9" class="field scroll" placeholder="<!DOCTYPE html> …"></textarea>
+      </div>
+      <div id="field-prompt" class="item-fields hidden">
+        <label class="field-label">Prompt-Text</label>
+        <textarea id="input-item-prompt" rows="6" class="field scroll" placeholder="Strukturierten Prompt für Pflegeplanung definieren …"></textarea>
+      </div>
+      <div id="field-image" class="item-fields hidden">
+        <label class="field-label">Bild hochladen</label>
+        <input type="file" id="input-item-image" accept="image/*" class="field">
+      </div>
+    </div>
+    <div class="flex justify-end gap-3 mt-6">
+      <button class="btn btn-ghost" onclick="closeItemModal()">Abbrechen</button>
+      <button class="btn btn-accent" onclick="createItem()">Speichern</button>
+    </div>
+  </div>
+</div>
 
-        // Default Icon SVG for Folders
-        const defaultFolderIcon = `<svg class="w-full h-full text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4z" clip-rule="evenodd"></path></svg>`;
+<div id="toast-wrap" class="toast-wrap"></div>
 
-        // Initialization
-        window.addEventListener('DOMContentLoaded', () => {
-            loadFromLocalStorage();
-            updateStorageQuota();
-            renderFolders();
-        });
+<script>
+let appData = [];
+let activeFolderId = null;
 
-        function loadFromLocalStorage() {
-            const data = localStorage.getItem('acuria_repository');
-            if (data) {
-                try {
-                    appData = JSON.parse(data);
-                } catch (e) {
-                    console.error("Fehler beim Laden der Daten", e);
-                    appData = [];
-                }
-            }
-        }
+/* ---------- Icon helpers ---------- */
+function svgIcon(paths, size, extra){
+  size = size || 18; extra = extra || '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" ${extra}>${paths}</svg>`;
+}
+const P = {
+  folder:'<path d="M3 7.5A2.5 2.5 0 0 1 5.5 5H9l2 2.2h7.5A2.5 2.5 0 0 1 21 9.7V17a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 17z"/>',
+  trash:'<path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m2 0v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7"/><path d="M10 11.5v5M14 11.5v5"/>',
+  copy:'<rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M6 15H5.5A2.5 2.5 0 0 1 3 12.5v-7A2.5 2.5 0 0 1 5.5 3h7A2.5 2.5 0 0 1 15 5.5V6"/>',
+  external:'<path d="M14 4h6v6"/><path d="M20 4 10 14"/><path d="M19 13.5V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4.5"/>',
+  link:'<path d="M10.5 13.5a4 4 0 0 0 5.7 0l2.3-2.3a4 4 0 0 0-5.7-5.7l-1.2 1.2"/><path d="M13.5 10.5a4 4 0 0 0-5.7 0L5.5 12.8a4 4 0 0 0 5.7 5.7l1.2-1.2"/>',
+  code:'<path d="m16 18 5-6-5-6"/><path d="m8 6-5 6 5 6"/>',
+  prompt:'<path d="M12 3.2 13.7 8 18.5 9.7 13.7 11.4 12 16.2 10.3 11.4 5.5 9.7 10.3 8z"/><path d="M18.6 14.4 19.4 16.7l2.3.8-2.3.8-.8 2.3-.8-2.3L15 17.5l2.3-.8z"/>',
+  image:'<rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.7"/><path d="m21 16-5-5L4 21"/>',
+  check:'<path d="m4 12 5 5L20 6"/>'
+};
+const TYPE_META = {
+  link:  {label:'Link',   cls:'badge-link',   icon:P.link},
+  code:  {label:'Code',   cls:'badge-code',   icon:P.code},
+  prompt:{label:'Prompt', cls:'badge-prompt', icon:P.prompt},
+  image: {label:'Bild',   cls:'badge-image',  icon:P.image}
+};
+function defaultFolderGlyph(){
+  return `<svg viewBox="0 0 24 24" style="width:100%;height:100%" fill="none" stroke="url(#brandGrad)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${P.folder}</svg>`;
+}
 
-        function saveToLocalStorage() {
-            localStorage.setItem('acuria_repository', JSON.stringify(appData));
-            updateStorageQuota();
-        }
+/* ---------- App icon / favicon ---------- */
+function setFavicon(){
+  const s =
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>"+
+    "<defs>"+
+    "<linearGradient id='fh' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#5C7682'/><stop offset='.52' stop-color='#2E6B52'/><stop offset='1' stop-color='#147A53'/></linearGradient>"+
+    "<linearGradient id='fa' x1='.2' y1='0' x2='.8' y2='1'><stop offset='0' stop-color='#6B8592'/><stop offset='1' stop-color='#18AA70'/></linearGradient>"+
+    "<linearGradient id='fc' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#42E8AC'/><stop offset='1' stop-color='#0CB87D'/></linearGradient>"+
+    "</defs>"+
+    "<rect x='2' y='2' width='96' height='96' rx='22' fill='#0C1320'/>"+
+    "<polygon points='50,10 83,28.5 83,71.5 50,90 17,71.5 17,28.5' fill='none' stroke='url(#fh)' stroke-width='5' stroke-linejoin='round'/>"+
+    "<line x1='22' y1='76' x2='50' y2='20' stroke='url(#fa)' stroke-width='5.5' stroke-linecap='round'/>"+
+    "<line x1='78' y1='76' x2='50' y2='20' stroke='url(#fa)' stroke-width='5.5' stroke-linecap='round'/>"+
+    "<line x1='31' y1='57' x2='69' y2='57' stroke='url(#fa)' stroke-width='5.5' stroke-linecap='round'/>"+
+    "<rect x='53' y='37' width='9' height='28' rx='2' fill='url(#fc)'/>"+
+    "<rect x='41' y='47' width='35' height='9' rx='2' fill='url(#fc)'/>"+
+    "</svg>";
+  const url = 'data:image/svg+xml,' + encodeURIComponent(s);
+  let link = document.querySelector("link[rel='icon']");
+  if(!link){ link = document.createElement('link'); link.rel='icon'; document.head.appendChild(link); }
+  link.type='image/svg+xml'; link.href=url;
+  const at = document.createElement('link'); at.rel='apple-touch-icon'; at.href=url; document.head.appendChild(at);
+}
 
-        function updateStorageQuota() {
-            const totalBytes = encodeURIComponent(JSON.stringify(localStorage)).length;
-            const kiloBytes = (totalBytes / 1024).toFixed(2);
-            document.getElementById('storage-quota').innerText = `${kiloBytes} KB`;
-        }
+/* ---------- Storage ---------- */
+function loadFromLocalStorage(){
+  const data = localStorage.getItem('acuria_repository');
+  if(data){ try{ appData = JSON.parse(data); }catch(e){ console.error('Fehler beim Laden', e); appData = []; } }
+}
+function saveToLocalStorage(){
+  localStorage.setItem('acuria_repository', JSON.stringify(appData));
+  updateStorageQuota();
+}
+function updateStorageQuota(){
+  const totalBytes = encodeURIComponent(JSON.stringify(localStorage)).length;
+  document.getElementById('storage-quota').innerText = (totalBytes/1024).toFixed(2) + ' KB';
+}
 
-        // Folder Modal UI
-        function openFolderModal() { document.getElementById('folder-modal').classList.remove('hidden'); }
-        function closeFolderModal() {
-            document.getElementById('folder-modal').classList.add('hidden');
-            document.getElementById('input-folder-name').value = '';
-        }
+/* ---------- Drawer ---------- */
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-backdrop').classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-backdrop').classList.remove('open');
+}
 
-        // Item Modal UI
-        function openItemModal() { 
-            if (!activeFolderId) return;
-            document.getElementById('item-modal').classList.remove('hidden'); 
-            toggleItemTypeFields();
-        }
-        function closeItemModal() {
-            document.getElementById('item-modal').classList.add('hidden');
-            document.getElementById('input-item-title').value = '';
-            document.getElementById('input-item-link').value = '';
-            document.getElementById('input-item-code').value = '';
-            document.getElementById('input-item-prompt').value = '';
-            document.getElementById('input-item-image').value = '';
-        }
+/* ---------- Folder modal ---------- */
+function openFolderModal(){ document.getElementById('folder-modal').classList.remove('hidden'); setTimeout(()=>document.getElementById('input-folder-name').focus(),60); }
+function closeFolderModal(){ document.getElementById('folder-modal').classList.add('hidden'); document.getElementById('input-folder-name').value=''; }
 
-        function toggleItemTypeFields() {
-            const type = document.getElementById('input-item-type').value;
-            document.querySelectorAll('.item-fields').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`field-${type}`).classList.remove('hidden');
-        }
+/* ---------- Item modal ---------- */
+function openItemModal(){
+  if(!activeFolderId) return;
+  document.getElementById('item-modal').classList.remove('hidden');
+  toggleItemTypeFields();
+}
+function closeItemModal(){
+  document.getElementById('item-modal').classList.add('hidden');
+  ['input-item-title','input-item-link','input-item-code','input-item-prompt','input-item-image'].forEach(id=>document.getElementById(id).value='');
+}
+function toggleItemTypeFields(){
+  const type = document.getElementById('input-item-type').value;
+  document.querySelectorAll('.item-fields').forEach(el=>el.classList.add('hidden'));
+  document.getElementById('field-'+type).classList.remove('hidden');
+}
 
-        // Folder Operations
-        function createFolder() {
-            const name = document.getElementById('input-folder-name').value.trim();
-            if (!name) return;
+/* ---------- Folder ops ---------- */
+function createFolder(){
+  const name = document.getElementById('input-folder-name').value.trim();
+  if(!name) return;
+  const newFolder = { id:'folder_'+Date.now(), name:name, icon:null, items:[] };
+  appData.push(newFolder);
+  saveToLocalStorage();
+  renderFolders();
+  closeFolderModal();
+  selectFolder(newFolder.id);
+}
+function deleteFolder(folderId, event){
+  event.stopPropagation();
+  if(!confirm('Ordner und alle darin enthaltenen Einträge unwiderruflich löschen?')) return;
+  appData = appData.filter(f=>f.id!==folderId);
+  if(activeFolderId===folderId) activeFolderId = null;
+  saveToLocalStorage();
+  renderFolders();
+  resetMainArea();
+}
+function selectFolder(folderId){
+  activeFolderId = folderId;
+  renderFolders();
+  renderActiveFolderContents();
+  if(window.innerWidth<=767) closeSidebar();
+}
+function resetMainArea(){
+  document.getElementById('active-folder-name').innerText = 'Kein Ordner ausgewählt';
+  document.getElementById('active-folder-meta').innerText = 'Wählen Sie einen Ordner oder erstellen Sie einen neuen.';
+  document.getElementById('active-folder-icon').innerHTML = defaultFolderGlyph();
+  document.getElementById('btn-add-item').classList.add('hidden');
+  document.getElementById('items-container').innerHTML =
+    `<div class="empty">${svgIcon(P.folder,54)}<p>Kein Ordner ausgewählt</p><p class="empty-sub">Erstellen Sie links einen Ordner, um Einträge zu verwalten.</p></div>`;
+}
 
-            const newFolder = {
-                id: 'folder_' + Date.now(),
-                name: name,
-                icon: null, // Dynamic allocation based on inner HTML
-                items: []
-            };
+/* ---------- Automatic folder icon ---------- */
+function determineFolderIcon(folder){
+  const htmlItem = folder.items.find(it => it.type==='link' || (it.type==='code' && it.content.includes('<html')));
+  if(htmlItem){
+    if(htmlItem.type==='link'){
+      try{ const url = new URL(htmlItem.content);
+        return `<img src="https://www.google.com/s2/favicons?sz=64&domain=${url.hostname}" style="width:100%;height:100%;object-fit:contain" alt="">`;
+      }catch(e){ return defaultFolderGlyph(); }
+    } else {
+      const m = htmlItem.content.match(/<link[^>]*rel=["'](?:shortcut )?icon["'][^>]*href=["']([^"']+)["']/i);
+      if(m && m[1] && m[1].startsWith('http')) return `<img src="${m[1]}" style="width:100%;height:100%;object-fit:contain" alt="">`;
+      return `<svg viewBox="0 0 24 24" style="width:100%;height:100%" fill="none" stroke="url(#codeGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P.code}</svg>`;
+    }
+  }
+  return defaultFolderGlyph();
+}
 
-            appData.push(newFolder);
-            saveToLocalStorage();
-            renderFolders();
-            closeFolderModal();
-            selectFolder(newFolder.id);
-        }
+/* ---------- Render sidebar ---------- */
+function renderFolders(){
+  const container = document.getElementById('folder-list');
+  container.innerHTML = '';
+  if(appData.length===0){
+    container.innerHTML = `<div class="side-empty">${svgIcon(P.folder,30,'style="opacity:.4;margin-bottom:8px"')}Noch keine Ordner vorhanden</div>`;
+    return;
+  }
+  appData.forEach(folder=>{
+    const isActive = folder.id===activeFolderId;
+    const folderEl = document.createElement('div');
+    folderEl.className = 'folder-item' + (isActive?' active':'');
+    folderEl.onclick = ()=>selectFolder(folder.id);
+    folderEl.innerHTML = `
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="folder-icon-wrap">${determineFolderIcon(folder)}</div>
+        <span class="folder-name truncate">${escapeHTML(folder.name)}</span>
+      </div>
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <span class="folder-count">${folder.items.length}</span>
+        <button class="danger-icon" onclick="deleteFolder('${folder.id}', event)" aria-label="Ordner löschen">${svgIcon(P.trash,15)}</button>
+      </div>`;
+    container.appendChild(folderEl);
+  });
+}
 
-        function deleteFolder(folderId, event) {
-            event.stopPropagation();
-            if (!confirm("Ordner und alle darin enthaltenen Einträge unwiderruflich löschen?")) return;
-            
-            appData = appData.filter(f => f.id !== folderId);
-            if (activeFolderId === folderId) {
-                activeFolderId = null;
-            }
-            saveToLocalStorage();
-            renderFolders();
-            resetMainArea();
-        }
+/* ---------- Render items ---------- */
+function renderActiveFolderContents(){
+  const folder = appData.find(f=>f.id===activeFolderId);
+  if(!folder) return;
+  document.getElementById('active-folder-name').innerText = folder.name;
+  document.getElementById('active-folder-meta').innerText = folder.items.length + ' Komponente' + (folder.items.length===1?'':'n');
+  document.getElementById('active-folder-icon').innerHTML = determineFolderIcon(folder);
+  document.getElementById('btn-add-item').classList.remove('hidden');
 
-        function selectFolder(folderId) {
-            activeFolderId = folderId;
-            renderFolders();
-            renderActiveFolderContents();
-        }
+  const container = document.getElementById('items-container');
+  container.innerHTML = '';
+  if(folder.items.length===0){
+    container.innerHTML = `<div class="empty">${svgIcon(P.image,54)}<p>Dieser Ordner ist leer</p><p class="empty-sub">Fügen Sie Links, Code, Prompts oder Bilder hinzu.</p></div>`;
+    return;
+  }
 
-        function resetMainArea() {
-            document.getElementById('active-folder-name').innerText = "Kein Ordner ausgewählt";
-            document.getElementById('active-folder-meta').innerText = "Wählen Sie einen Ordner aus oder erstellen Sie einen neuen.";
-            document.getElementById('active-folder-icon').innerHTML = '';
-            document.getElementById('btn-add-item').classList.add('hidden');
-            document.getElementById('items-container').innerHTML = '';
-        }
+  folder.items.forEach(item=>{
+    const meta = TYPE_META[item.type] || {label:item.type, cls:'', icon:''};
+    let contentMarkup = '';
+    if(item.type==='link'){
+      contentMarkup = `<a href="${escapeHTML(item.content)}" target="_blank" rel="noopener" class="content-link">${svgIcon(P.external,15)}<span>${escapeHTML(item.content)}</span></a>`;
+    } else if(item.type==='code'){
+      contentMarkup = `<div class="content-box"><pre class="content-pre scroll">${escapeHTML(item.content)}</pre><button class="copy-btn" onclick="copyItem('${item.id}')">${svgIcon(P.copy,12)}Copy</button></div>`;
+    } else if(item.type==='prompt'){
+      contentMarkup = `<div class="content-box"><div class="content-prompt scroll">${escapeHTML(item.content)}</div><button class="copy-btn" onclick="copyItem('${item.id}')">${svgIcon(P.copy,12)}Copy</button></div>`;
+    } else if(item.type==='image'){
+      contentMarkup = `<div class="img-preview"><img src="${item.content}" alt="${escapeHTML(item.title)}"></div>`;
+    }
+    const card = document.createElement('div');
+    card.className = 'card-3d group';
+    card.innerHTML = `
+      <div class="flex items-start justify-between mb-3 gap-2">
+        <span class="badge ${meta.cls}">${svgIcon(meta.icon,12)}${meta.label}</span>
+        <button class="danger-icon opacity-0 group-hover:opacity-100 transition" onclick="deleteItem('${item.id}')" aria-label="Eintrag löschen">${svgIcon(P.trash,15)}</button>
+      </div>
+      <h4 class="card-title font-display truncate">${escapeHTML(item.title)}</h4>
+      <span class="card-date font-mono block mt-1">${escapeHTML(item.date || '')}</span>
+      ${contentMarkup}`;
+    container.appendChild(card);
+  });
+}
 
-        // Automatic Icon Extraction Logic
-        function determineFolderIcon(folder) {
-            // Requirement: Automatically adopt the logo/favicon of the stored HTML/link
-            // Look for links or code components containing HTML structure
-            const htmlItem = folder.items.find(item => item.type === 'link' || (item.type === 'code' && item.content.includes('<html')));
-            
-            if (htmlItem) {
-                if (htmlItem.type === 'link') {
-                    try {
-                        const url = new URL(htmlItem.content);
-                        return `<img src="https://www.google.com/s2/favicons?sz=64&domain=${url.hostname}" class="w-full h-full object-contain" alt="Favicon">`;
-                    } catch (e) {
-                        return defaultFolderIcon;
-                    }
-                } else if (htmlItem.type === 'code') {
-                    // Extract custom icon declaration if present via regex or default to an HTML visual indicator
-                    const regex = /<link.*rel=["'](?:shortcut )?icon["'].*href=["']([^"']+)["']/i;
-                    const match = htmlItem.content.match(regex);
-                    if (match && match[1] && match[1].startsWith('http')) {
-                        return `<img src="${match[1]}" class="w-full h-full object-contain" alt="HTML Icon">`;
-                    }
-                    // Visual fallback for internal HTML code nodes
-                    return `<svg class="w-full h-full text-emeraldGreen" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>`;
-                }
-            }
-            return defaultFolderIcon;
-        }
+/* ---------- Item ops ---------- */
+function createItem(){
+  const folder = appData.find(f=>f.id===activeFolderId);
+  if(!folder) return;
+  const type = document.getElementById('input-item-type').value;
+  const title = document.getElementById('input-item-title').value.trim();
+  if(!title) return;
 
-        // Render Sidebar
-        function renderFolders() {
-            const container = document.getElementById('folder-list');
-            container.innerHTML = '';
+  let content = '';
+  if(type==='link'){ content = document.getElementById('input-item-link').value.trim(); if(!content) return; }
+  else if(type==='code'){ content = document.getElementById('input-item-code').value; if(!content.trim()) return; }
+  else if(type==='prompt'){ content = document.getElementById('input-item-prompt').value; if(!content.trim()) return; }
+  else if(type==='image'){
+    const fileInput = document.getElementById('input-item-image');
+    if(fileInput.files && fileInput.files[0]){
+      const reader = new FileReader();
+      reader.onload = e => finalizeItemCreation(folder, type, title, e.target.result);
+      reader.readAsDataURL(fileInput.files[0]);
+      return;
+    } else { return; }
+  }
+  finalizeItemCreation(folder, type, title, content);
+}
+function finalizeItemCreation(folder, type, title, content){
+  folder.items.push({
+    id:'item_'+Date.now(), type:type, title:title, content:content,
+    date:new Date().toLocaleString('de-DE', { timeZone:'Europe/Berlin' })
+  });
+  saveToLocalStorage();
+  renderFolders();
+  renderActiveFolderContents();
+  closeItemModal();
+}
+function deleteItem(itemId){
+  const folder = appData.find(f=>f.id===activeFolderId);
+  if(!folder) return;
+  folder.items = folder.items.filter(i=>i.id!==itemId);
+  saveToLocalStorage();
+  renderFolders();
+  renderActiveFolderContents();
+}
+function copyItem(itemId){
+  const folder = appData.find(f=>f.id===activeFolderId);
+  const item = folder && folder.items.find(i=>i.id===itemId);
+  if(item) copyToClipboard(item.content);
+}
 
-            appData.forEach(folder => {
-                const isActive = folder.id === activeFolderId;
-                const iconHtml = determineFolderIcon(folder);
+/* ---------- Utilities ---------- */
+function escapeHTML(str){
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+function copyToClipboard(text){
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(()=>showToast('In Zwischenablage kopiert')).catch(()=>fallbackCopy(text));
+  } else { fallbackCopy(text); }
+}
+function fallbackCopy(text){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); showToast('In Zwischenablage kopiert'); }
+  catch(e){ showToast('Kopieren fehlgeschlagen'); }
+  ta.remove();
+}
+function showToast(msg){
+  const wrap = document.getElementById('toast-wrap');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `${svgIcon(P.check,18)}<span>${escapeHTML(msg)}</span>`;
+  wrap.appendChild(t);
+  setTimeout(()=>{
+    t.style.transition='opacity .35s, transform .35s';
+    t.style.opacity='0'; t.style.transform='translateY(10px) scale(.95)';
+    setTimeout(()=>t.remove(),350);
+  }, 2200);
+}
 
-                const folderEl = document.createElement('div');
-                folderEl.className = `flex items-center justify-between p-3 rounded-lg cursor-pointer transition duration-150 ${isActive ? 'bg-emeraldGreen/20 border border-emeraldGreen/40' : 'hover:bg-gray-800 border border-transparent'}`;
-                folderEl.onclick = () => selectFolder(folder.id);
-
-                folderEl.innerHTML = `
-                    <div class="flex items-center space-x-3 overflow-hidden">
-                        <div class="w-6 h-6 flex-shrink-0 flex items-center justify-center rounded overflow-hidden">
-                            ${iconHtml}
-                        </div>
-                        <span class="text-sm font-medium truncate text-gray-200">${folder.name}</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs font-mono bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">${folder.items.length}</span>
-                        <button onclick="deleteFolder('${folder.id}', event)" class="text-gray-500 hover:text-red-400 p-0.5 rounded transition">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        </button>
-                    </div>
-                `;
-                container.appendChild(folderEl);
-            });
-        }
-
-        // Render Folder Items
-        function renderActiveFolderContents() {
-            const folder = appData.find(f => f.id === activeFolderId);
-            if (!folder) return;
-
-            document.getElementById('active-folder-name').innerText = folder.name;
-            document.getElementById('active-folder-meta').innerText = `ID: ${folder.id} | Gesamtkomponenten: ${folder.items.length}`;
-            document.getElementById('active-folder-icon').innerHTML = determineFolderIcon(folder);
-            document.getElementById('btn-add-item').classList.remove('hidden');
-
-            const container = document.getElementById('items-container');
-            container.innerHTML = '';
-
-            if (folder.items.length === 0) {
-                container.innerHTML = `
-                    <div class="col-span-full py-12 flex flex-col items-center justify-center text-gray-500 font-mono text-sm">
-                        <svg class="w-12 h-12 mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5a2 2 0 012-2h2a2 2 0 002-2V7a2 2 0 012-2h4a2 2 0 012 2v2a2 2 0 002 2h2a2 2 0 012 2z"></path></svg>
-                        Dieser Ordner besitzt keine Einträge.
-                    </div>
-                `;
-                return;
-            }
-
-            folder.items.forEach((item) => {
-                const card = document.createElement('div');
-                card.className = "bg-cardBg border border-gray-700 rounded-lg p-4 flex flex-col justify-between shadow-md relative overflow-hidden group";
-                
-                let contentMarkup = '';
-                let typeBadgeColor = 'bg-gray-800 text-gray-400';
-
-                if (item.type === 'link') {
-                    typeBadgeColor = 'bg-blue-900/40 text-blue-400 border border-blue-800/50';
-                    contentMarkup = `
-                        <a href="${item.content}" target="_blank" class="block bg-gray-900 hover:bg-gray-800 border border-gray-700 rounded p-3 text-sm text-emeraldGreen font-mono truncate transition mt-2">
-                            ${item.content} ↗
-                        </a>
-                    `;
-                } else if (item.type === 'code') {
-                    typeBadgeColor = 'bg-purple-900/40 text-purple-400 border border-purple-800/50';
-                    contentMarkup = `
-                        <div class="relative mt-2">
-                            <pre class="bg-gray-900 border border-gray-700 rounded p-2 text-xs font-mono text-gray-300 max-h-32 overflow-y-auto custom-scrollbar whitespace-pre-wrap">${escapeHTML(item.content)}</pre>
-                            <button onclick="copyToClipboard(\`${escapeQuotes(item.content)}\`)" class="absolute top-2 right-2 bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 text-[10px] rounded border border-gray-600 transition">Copy</button>
-                        </div>
-                    `;
-                } else if (item.type === 'prompt') {
-                    typeBadgeColor = 'bg-amber-900/40 text-amber-400 border border-amber-800/50';
-                    contentMarkup = `
-                        <div class="relative mt-2">
-                            <p class="bg-gray-900 border border-gray-700 rounded p-3 text-sm italic text-gray-300 whitespace-pre-wrap max-h-32 overflow-y-auto custom-scrollbar">"${item.content}"</p>
-                            <button onclick="copyToClipboard(\`${escapeQuotes(item.content)}\`)" class="absolute top-2 right-2 bg-gray-800 hover:bg-gray-700 text-white px-2 py-1 text-[10px] rounded border border-gray-600 transition">Copy</button>
-                        </div>
-                    `;
-                } else if (item.type === 'image') {
-                    typeBadgeColor = 'bg-rose-900/40 text-rose-400 border border-rose-800/50';
-                    contentMarkup = `
-                        <div class="mt-2 rounded border border-gray-700 overflow-hidden bg-gray-900 flex justify-center max-h-40">
-                            <img src="${item.content}" class="object-contain max-h-40 w-full" alt="${item.title}">
-                        </div>
-                    `;
-                }
-
-                card.innerHTML = `
-                    <div>
-                        <div class="flex items-start justify-between mb-2">
-                            <span class="text-xs uppercase px-2 py-0.5 rounded font-mono font-bold tracking-wider ${typeBadgeColor}">${item.type}</span>
-                            <button onclick="deleteItem('${item.id}')" class="text-gray-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition duration-150">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </div>
-                        <h4 class="text-sm font-bold text-white tracking-wide truncate mb-1">${item.title}</h4>
-                        <span class="text-[10px] font-mono text-gray-500 block mb-2">Erstellt: ${item.date}</span>
-                        ${contentMarkup}
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // Create Item Entry
-        function createItem() {
-            const folder = appData.find(f => f.id === activeFolderId);
-            if (!folder) return;
-
-            const type = document.getElementById('input-item-type').value;
-            const title = document.getElementById('input-item-title').value.trim();
-            if (!title) return;
-
-            let content = '';
-
-            if (type === 'link') {
-                content = document.getElementById('input-item-link').value.trim();
-                if (!content) return;
-            } else if (type === 'code') {
-                content = document.getElementById('input-item-code').value;
-                if (!content.trim()) return;
-            } else if (type === 'prompt') {
-                content = document.getElementById('input-item-prompt').value;
-                if (!content.trim()) return;
-            } else if (type === 'image') {
-                const fileInput = document.getElementById('input-item-image');
-                if (fileInput.files && fileInput.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        finalizeItemCreation(folder, type, title, e.target.result);
-                    };
-                    reader.readAsDataURL(fileInput.files[0]);
-                    return; // Early exit due to async file reading
-                } else {
-                    return;
-                }
-            }
-
-            finalizeItemCreation(folder, type, title, content);
-        }
-
-        function finalizeItemCreation(folder, type, title, content) {
-            const newItem = {
-                id: 'item_' + Date.now(),
-                type: type,
-                title: title,
-                content: content,
-                date: new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' })
-            };
-
-            folder.items.push(newItem);
-            saveToLocalStorage();
-            renderFolders(); // Update to check for automatic icon changes
-            renderActiveFolderContents();
-            closeItemModal();
-        }
-
-        function deleteItem(itemId) {
-            const folder = appData.find(f => f.id === activeFolderId);
-            if (!folder) return;
-
-            folder.items = folder.items.filter(i => i.id !== itemId);
-            saveToLocalStorage();
-            renderFolders();
-            renderActiveFolderContents();
-        }
-
-        // Helper Utilities
-        function escapeHTML(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-        
-        function escapeQuotes(str) {
-            return str.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
-        }
-
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert("Inhalt erfolgreich in die Zwischenablage kopiert.");
-            }).catch(err => {
-                console.error("Fehler beim Kopieren: ", err);
-            });
-        }
-    </script>
+/* ---------- Init ---------- */
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeFolderModal(); closeItemModal(); closeSidebar(); } });
+window.addEventListener('DOMContentLoaded', ()=>{
+  setFavicon();
+  loadFromLocalStorage();
+  updateStorageQuota();
+  renderFolders();
+  resetMainArea();
+});
+</script>
 </body>
+</html>
 </html>
